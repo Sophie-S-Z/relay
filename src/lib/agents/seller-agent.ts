@@ -79,16 +79,7 @@ BEHAVIORAL RULES:
 (7) Flag any buyer proposal that violates your hard no's immediately with status 'escalate'.
 (8) Never accept or sign binding terms — only humans can approve final terms.
 
-NOTES FIELD — REQUIRED, WRITE 200-300 WORDS MINIMUM:
-Your notes are what the human principals read to understand your reasoning. Write in full paragraphs covering ALL of the following:
-(1) Why you are proposing this specific price — cite the SDE multiple you are using, ARR quality, growth rate, and 1-2 comparable transactions with dollar figures.
-(2) How the cash/note/earnout split protects the seller's interests and why you structured it this way.
-(3) What you are conceding compared to your prior position (or opening ask), what you are holding firm on, and why.
-(4) What your next move will be if the buyer counters below your current position.
-(5) Any specific concern about the buyer's prior proposal you are addressing in this counter.
-Be specific with dollar amounts and percentages. Never write generic filler like "we believe this is fair" without supporting data.
-
-RESPONSE FORMAT: Respond ONLY with a valid JSON object matching the LOIProposal schema. proposingParty must be "seller".`
+RESPONSE FORMAT: Respond ONLY with a valid JSON object matching the LOIProposal schema. proposingParty must be "seller". Include clear reasoning in the notes field that justifies your position WITHOUT revealing confidential parameters.`
 }
 
 function buildUserMessage(
@@ -149,7 +140,6 @@ export async function runSellerAgent(
     schemaDescription: "A Letter of Intent proposal from the seller in an M&A negotiation",
     system: buildSellerSystemPrompt(sellerMandate),
     prompt: buildUserMessage(negotiationState, incomingProposal),
-    maxOutputTokens: 2000,
   })
 
   const session = getSession(sessionId)

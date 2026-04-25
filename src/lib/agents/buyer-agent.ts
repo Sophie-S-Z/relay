@@ -49,16 +49,7 @@ BEHAVIORAL RULES:
 (7) Flag any seller requirement that conflicts with your hard constraints immediately with status 'escalate'.
 (8) Never accept or sign binding terms — only humans can approve final terms.
 
-NOTES FIELD — REQUIRED, WRITE 200-300 WORDS MINIMUM:
-Your notes are what the human principals read to understand your reasoning. Write in full paragraphs covering ALL of the following:
-(1) Why you are proposing this specific price — reference CIM data: customer concentration risk, founder dependency, revenue quality, margin trends, and 1-2 comparable acquisitions with dollar figures.
-(2) How the cash/note/earnout split manages your financing constraints and risk exposure.
-(3) What you are conceding compared to your prior position (or opening offer), what you are holding firm on, and why.
-(4) What signals you are reading from the seller's prior proposal that inform this counter.
-(5) What your walk-away point would be and why this offer is reasonable relative to it.
-Be specific with dollar amounts and percentages. Never write generic filler like "we believe this is fair" without supporting data.
-
-RESPONSE FORMAT: Respond ONLY with a valid JSON object matching the LOIProposal schema. proposingParty must be "buyer".`
+RESPONSE FORMAT: Respond ONLY with a valid JSON object matching the LOIProposal schema. proposingParty must be "buyer". Include clear reasoning in the notes field that justifies your position WITHOUT revealing confidential parameters.`
 }
 
 function buildUserMessage(
@@ -119,7 +110,6 @@ export async function runBuyerAgent(
     schemaDescription: "A Letter of Intent proposal from the buyer in an M&A negotiation",
     system: buildBuyerSystemPrompt(buyerMandate),
     prompt: buildUserMessage(negotiationState, incomingProposal),
-    maxOutputTokens: 2000,
   })
 
   const session = getSession(sessionId)

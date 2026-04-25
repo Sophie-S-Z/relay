@@ -105,13 +105,13 @@ function ProposalCard({ proposal, index }: { proposal: LOIProposal; index: numbe
         </div>
 
         {proposal.notes && (
-          <div className="mt-3 border-t border-border pt-3">
+          <div className="mt-3">
             <button
               onClick={() => setExpanded(!expanded)}
-              className="flex items-center gap-1.5 text-xs font-medium text-foreground hover:text-foreground/70 transition-colors w-full text-left"
+              className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground transition-colors"
             >
-              {expanded ? <ChevronUp className="h-3.5 w-3.5 flex-shrink-0" /> : <ChevronDown className="h-3.5 w-3.5 flex-shrink-0" />}
-              {expanded ? "Hide" : "Show"} agent reasoning
+              {expanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+              Agent reasoning
             </button>
             {expanded && (
               <div className="mt-2 text-xs text-muted-foreground leading-relaxed bg-secondary rounded-xl p-3 border border-border">
