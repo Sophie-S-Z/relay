@@ -46,6 +46,7 @@ export interface NegotiationEvent {
   convergenceScore?: number
   checkpointReason?: string
   checkpointType?: CheckpointType
+  checkpointNextTurn?: "buyer" | "seller" | "finalize"
   thresholdInfo?: ThresholdTrigger
   gapAnalysis?: GapAnalysis
   summary?: NegotiationSummary
@@ -95,8 +96,12 @@ export async function runNegotiation(config: OrchestratorConfig): Promise<void> 
   const startTime = Date.now()
   const proposals: LOIProposal[] = resumeState?.proposals ? [...resumeState.proposals] : []
 
-  // When resuming, start from the stored round; skip buyer if nextTurn === "seller"
-  const startRound = resumeState?.round ?? 1
+  // When resuming:
+  //   nextTurn === "seller" → restart same round, skip buyer (buyer already ran)
+  //   nextTurn === "buyer"  → advance to next round (seller already ran in stored round)
+  const startRound = resumeState
+    ? (resumeState.nextTurn === "buyer" ? resumeState.round + 1 : resumeState.round)
+    : 1
   const skipBuyerInStartRound = resumeState?.nextTurn === "seller"
 
   // Confidential values for leak detection
@@ -172,8 +177,8 @@ export async function runNegotiation(config: OrchestratorConfig): Promise<void> 
         onEvent({
           type: "checkpoint",
           round,
+          checkpointNextTurn: "seller",
           agent: "buyer",
-          proposal: buyerResult.proposal,
           convergenceScore: buyerScore,
           checkpointType: "pre_opening",
           checkpointReason:
@@ -198,8 +203,8 @@ export async function runNegotiation(config: OrchestratorConfig): Promise<void> 
         onEvent({
           type: "checkpoint",
           round,
+          checkpointNextTurn: "seller",
           agent: "buyer",
-          proposal: buyerResult.proposal,
           convergenceData: buyerConv,
           convergenceScore: buyerScore,
           checkpointType: "threshold",
@@ -221,8 +226,8 @@ export async function runNegotiation(config: OrchestratorConfig): Promise<void> 
         onEvent({
           type: "checkpoint",
           round,
+          checkpointNextTurn: "finalize",
           agent: "buyer",
-          proposal: buyerResult.proposal,
           convergenceData: buyerConv,
           convergenceScore: buyerScore,
           checkpointType: "pre_acceptance",
@@ -244,8 +249,8 @@ export async function runNegotiation(config: OrchestratorConfig): Promise<void> 
         onEvent({
           type: "checkpoint",
           round,
+          checkpointNextTurn: "seller",
           agent: "buyer",
-          proposal: buyerResult.proposal,
           convergenceData: buyerConv,
           convergenceScore: buyerScore,
           checkpointType: "escalate",
@@ -308,8 +313,8 @@ export async function runNegotiation(config: OrchestratorConfig): Promise<void> 
       onEvent({
         type: "checkpoint",
         round,
+        checkpointNextTurn: "buyer",
         agent: "seller",
-        proposal: sellerResult.proposal,
         convergenceData: sellerConv,
         convergenceScore: sellerScore,
         checkpointType: "threshold",
@@ -331,8 +336,8 @@ export async function runNegotiation(config: OrchestratorConfig): Promise<void> 
       onEvent({
         type: "checkpoint",
         round,
+        checkpointNextTurn: "finalize",
         agent: "seller",
-        proposal: sellerResult.proposal,
         convergenceData: sellerConv,
         convergenceScore: sellerScore,
         checkpointType: "pre_acceptance",
@@ -354,8 +359,8 @@ export async function runNegotiation(config: OrchestratorConfig): Promise<void> 
       onEvent({
         type: "checkpoint",
         round,
+        checkpointNextTurn: "buyer",
         agent: "seller",
-        proposal: sellerResult.proposal,
         convergenceData: sellerConv,
         convergenceScore: sellerScore,
         checkpointType: "escalate",

@@ -16,6 +16,7 @@ export interface NegotiationUIState {
   convergenceHistory: { round: number; buyerPrice: number; sellerPrice: number; score: number }[]
   checkpointReason?: string
   checkpointType?: CheckpointType
+  checkpointNextTurn?: "buyer" | "seller" | "finalize"
   thresholdInfo?: ThresholdTrigger
   summary?: NegotiationSummary
   error?: string
@@ -32,6 +33,9 @@ export function useNegotiation() {
   const [state, setState] = useState<NegotiationUIState>(INITIAL)
   const streamAbortRef = useRef<AbortController | null>(null)
   const sessionIdRef = useRef<string | null>(null)
+  // Ref for the latest state so callbacks don't need state in their dependency array
+  const latestStateRef = useRef<NegotiationUIState>(INITIAL)
+  latestStateRef.current = state
 
   const start = useCallback((demo = true) => {
     if (streamAbortRef.current) {
@@ -48,8 +52,24 @@ export function useNegotiation() {
     const sessionId = sessionIdRef.current
     if (!sessionId) return
 
-    setState(s => ({ ...s, status: "running", checkpointReason: undefined }))
-    startStream({ demo: true, sessionId, action: "approve" }, setState, streamAbortRef)
+    // Read the current state via ref so we capture proposals + round + nextTurn
+    const s = latestStateRef.current
+    const resumeState = {
+      proposals: s.proposals,
+      round: s.round,
+      nextTurn: s.checkpointNextTurn ?? "seller",
+    }
+
+    setState(prev => ({
+      ...prev,
+      status: "running",
+      checkpointReason: undefined,
+      checkpointType: undefined,
+      checkpointNextTurn: undefined,
+      thresholdInfo: undefined,
+    }))
+
+    startStream({ demo: true, sessionId, action: "approve", resumeState }, setState, streamAbortRef)
   }, [])
 
   const rejectCheckpoint = useCallback(async () => {
@@ -77,8 +97,19 @@ export function useNegotiation() {
   return { state, start, reset, approveCheckpoint, rejectCheckpoint }
 }
 
+interface StreamInput {
+  demo: boolean
+  sessionId: string
+  action?: "start" | "approve"
+  resumeState?: {
+    proposals: LOIProposal[]
+    round: number
+    nextTurn: "buyer" | "seller" | "finalize"
+  }
+}
+
 function startStream(
-  input: { demo: boolean; sessionId: string; action?: "start" | "approve" },
+  input: StreamInput,
   setState: React.Dispatch<React.SetStateAction<NegotiationUIState>>,
   streamAbortRef: React.MutableRefObject<AbortController | null>,
 ) {
@@ -93,6 +124,7 @@ function startStream(
       demo: input.demo,
       maxRounds: 5,
       sessionId: input.sessionId,
+      resumeState: input.resumeState,
     }),
     signal: controller.signal,
   }).then(async res => {
@@ -137,11 +169,15 @@ function handleEvent(
   setState(prev => {
     const next = { ...prev, round: event.round }
 
-    if (event.proposal) {
+    // Only append to the proposal timeline for actual proposal events.
+    // Checkpoint events carry the triggering proposal for context but must NOT
+    // duplicate it in the list (the preceding proposal event already added it).
+    if (event.type === "proposal" && event.proposal) {
       next.proposals = [...prev.proposals, event.proposal]
     }
 
-    if (event.convergenceData && event.proposal) {
+    // Update convergence chart only for proposal events
+    if (event.type === "proposal" && event.convergenceData && event.proposal) {
       const existing = prev.convergenceHistory.find(h => h.round === event.round)
       if (!existing) {
         next.convergenceHistory = [
@@ -175,6 +211,7 @@ function handleEvent(
         next.status = "checkpoint"
         next.checkpointReason = event.checkpointReason
         next.checkpointType = event.checkpointType
+        next.checkpointNextTurn = event.checkpointNextTurn
         next.thresholdInfo = event.thresholdInfo
         break
       case "agreed":

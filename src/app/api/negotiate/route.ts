@@ -17,7 +17,10 @@ interface RequestBody {
   sellerMandate?: SellerMandate
   buyerMandate?: BuyerMandate
   maxRounds?: number
-  demo?: boolean // if true, use preset scenario
+  demo?: boolean
+  // Client sends this back on approve so the engine can resume without relying
+  // on a server-side store (which doesn't survive Vercel serverless cold starts)
+  resumeState?: ResumeState
 }
 
 export async function POST(req: Request): Promise<Response> {
@@ -42,16 +45,21 @@ export async function POST(req: Request): Promise<Response> {
   const buyerMandate = body.demo ? DEMO_BUYER_MANDATE : (body.buyerMandate || DEMO_BUYER_MANDATE)
   const maxRounds = body.maxRounds || 5
 
-  // On approve: load checkpoint state so the engine resumes where it paused
+  // On approve: prefer the client-provided resumeState (works on serverless where
+  // the in-memory store is wiped between requests), fall back to the store if not provided.
   let resumeState: ResumeState | undefined
   if (body.action === "approve") {
-    const checkpoint = getCheckpoint(sessionId)
-    if (checkpoint) {
-      clearCheckpoint(sessionId)
-      resumeState = {
-        proposals: checkpoint.proposals,
-        round: checkpoint.round,
-        nextTurn: checkpoint.nextTurn,
+    if (body.resumeState) {
+      resumeState = body.resumeState
+    } else {
+      const checkpoint = getCheckpoint(sessionId)
+      if (checkpoint) {
+        clearCheckpoint(sessionId)
+        resumeState = {
+          proposals: checkpoint.proposals,
+          round: checkpoint.round,
+          nextTurn: checkpoint.nextTurn,
+        }
       }
     }
   }
