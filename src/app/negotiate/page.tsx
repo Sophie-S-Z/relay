@@ -114,7 +114,7 @@ function ProposalCard({ proposal, index }: { proposal: LOIProposal; index: numbe
               Agent reasoning
             </button>
             {expanded && (
-              <div className="mt-2 text-xs text-muted-foreground leading-relaxed bg-secondary rounded-xl p-3 border border-border">
+              <div className="mt-2 text-xs text-muted-foreground leading-relaxed bg-secondary rounded-xl p-3 border border-border max-h-72 overflow-y-auto whitespace-pre-wrap">
                 {proposal.notes}
               </div>
             )}
