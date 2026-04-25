@@ -22,11 +22,26 @@ export const DEMO_SELLER: SellerOnboardingData = {
   employeeCount: 18,
   financials: {
     revenue: 1_200_000,
-    ebitda: 480_000,
+    ebitda: 645_600,           // SDE: $360K net + $150K owner salary + $15.6K add-backs + $120K D&A
     revenueGrowthRate: 0.40,
     grossMargin: 0.85,
     netIncome: 360_000,
     fiscalYearEnd: "December",
+    ownerSalary: 150_000,
+    addBacks: [
+      { label: "Owner personal vehicle", amount: 9_600 },
+      { label: "Owner health insurance", amount: 6_000 },
+    ],
+    depreciation: 12_000,
+    interest: 8_000,
+    recurringRevenuePercent: 88,
+    customerCount: 247,
+    topCustomerPercent: 11,
+    yearlyData: [
+      { year: 2022, revenue: 614_000, expenses: 498_000, netIncome: 116_000 },
+      { year: 2023, revenue: 857_000, expenses: 614_000, netIncome: 243_000 },
+      { year: 2024, revenue: 1_200_000, expenses: 840_000, netIncome: 360_000 },
+    ],
   },
   askingPrice: 3_600_000,
   dealStructurePreference: "flexible",

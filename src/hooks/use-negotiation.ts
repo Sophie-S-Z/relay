@@ -34,18 +34,6 @@ export function useNegotiation() {
     }
 
     setState({ ...INITIAL, status: "running" })
-
-    // POST to negotiate, then open SSE
-    fetch("/api/negotiate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ demo, maxRounds: 5 }),
-    }).catch(() => {
-      setState(s => ({ ...s, status: "error", error: "Failed to start negotiation" }))
-    })
-
-    // Use GET SSE stream approach — negotiate streams via POST body
-    // Since POST with streaming: use ReadableStream directly
     startStream(demo, setState, esRef)
   }, [])
 

@@ -12,6 +12,22 @@ export interface SellerOnboardingData {
     grossMargin: number
     netIncome: number
     fiscalYearEnd: string
+    // SDE components
+    ownerSalary: number
+    addBacks: { label: string; amount: number }[]
+    depreciation: number
+    interest: number
+    // Quality indicators
+    recurringRevenuePercent: number
+    customerCount: number
+    topCustomerPercent: number
+    // 3-year history
+    yearlyData: {
+      year: number
+      revenue: number
+      expenses: number
+      netIncome: number
+    }[]
   }
   askingPrice: number | null
   dealStructurePreference: "asset_sale" | "stock_sale" | "merger" | "flexible"
@@ -77,6 +93,13 @@ export interface ValuationMemo {
     mid: number
     high: number
   }
+  sde: number
+  sdeBreakdown: {
+    netIncome: number
+    ownerCompensation: number
+    adjustments: number
+  }
+  adjustedMultiple: number
   keyValueDrivers: string[]
   risks: string[]
   comparableTransactions: {

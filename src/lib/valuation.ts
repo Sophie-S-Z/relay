@@ -39,13 +39,16 @@ export function calculateValuation(seller: SellerOnboardingData): ValuationResul
   const { financials } = seller
 
   // ─── SDE Calculation ──────────────────────────────────
-  // SDE = EBITDA (approximated) + owner compensation adjustments
-  // Since our type gives us EBITDA directly, we use it as the SDE base
-  const sde = financials.ebitda
+  // SDE = Net Income + Owner Salary + Add-Backs + D&A + Interest
+  const totalAddBacks = (financials.addBacks ?? []).reduce((sum, a) => sum + a.amount, 0)
+  const ownerSalary = financials.ownerSalary ?? 0
+  const depreciation = financials.depreciation ?? 0
+  const interest = financials.interest ?? 0
+  const sde = financials.netIncome + ownerSalary + totalAddBacks + depreciation + interest
   const sdeBreakdown = {
     netIncome: financials.netIncome,
-    ownerCompensation: financials.ebitda - financials.netIncome, // implied add-backs
-    adjustments: 0,
+    ownerCompensation: ownerSalary,
+    adjustments: totalAddBacks + depreciation + interest,
   }
 
   // ─── Base Multiple ────────────────────────────────────
@@ -84,6 +87,24 @@ export function calculateValuation(seller: SellerOnboardingData): ValuationResul
     adjustments.push({ factor: "Owner Dependency Risk", delta: -0.5, reason: `Only ${seller.employeeCount} employees suggests heavy owner dependency` })
   } else if (seller.employeeCount > 20) {
     adjustments.push({ factor: "Established Team", delta: 0.25, reason: `${seller.employeeCount} employees indicates scalable operations` })
+  }
+
+  // Recurring revenue quality
+  const recurringPct = financials.recurringRevenuePercent ?? 0
+  if (recurringPct > 80) {
+    adjustments.push({ factor: "High Recurring Revenue", delta: 0.5, reason: `${recurringPct}% recurring revenue — highly predictable cash flow` })
+  } else if (recurringPct > 50) {
+    adjustments.push({ factor: "Mixed Recurring Revenue", delta: 0.25, reason: `${recurringPct}% recurring revenue shows solid retention` })
+  } else if (recurringPct < 20) {
+    adjustments.push({ factor: "Low Recurring Revenue", delta: -0.25, reason: `${recurringPct}% recurring revenue increases revenue risk` })
+  }
+
+  // Customer concentration risk
+  const topCustomerPct = financials.topCustomerPercent ?? 0
+  if (topCustomerPct > 40) {
+    adjustments.push({ factor: "Customer Concentration", delta: -0.5, reason: `Top customer represents ${topCustomerPct}% of revenue — material concentration risk` })
+  } else if (topCustomerPct > 25) {
+    adjustments.push({ factor: "Moderate Concentration", delta: -0.25, reason: `Top customer at ${topCustomerPct}% of revenue is elevated` })
   }
 
   // Timeline urgency discount
@@ -132,6 +153,15 @@ export function calculateValuation(seller: SellerOnboardingData): ValuationResul
       severity: "low",
       title: "Compressed Timeline",
       description: `An immediate sale timeline may limit the competitive process and reduce offers.`,
+    })
+  }
+
+  const topCustPct = financials.topCustomerPercent ?? 0
+  if (topCustPct > 35) {
+    riskFlags.push({
+      severity: topCustPct > 50 ? "high" : "medium",
+      title: "Customer Concentration",
+      description: `Top customer represents ${topCustPct}% of revenue. Buyers will require customer diversification covenants or escrow holdbacks.`,
     })
   }
 
@@ -205,6 +235,9 @@ export function buildValuationMemo(
       mid: result.valuationMid,
       high: result.valuationHigh,
     },
+    sde: result.sde,
+    sdeBreakdown: result.sdeBreakdown,
+    adjustedMultiple: result.adjustedMultiple,
     keyValueDrivers: [
       ...(result.adjustments.filter(a => a.delta > 0).map(a => a.reason)),
       `$${result.sde.toLocaleString()} in EBITDA`,
