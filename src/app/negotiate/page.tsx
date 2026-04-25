@@ -114,10 +114,7 @@ function ProposalCard({ proposal, index }: { proposal: LOIProposal; index: numbe
               {expanded ? "Hide" : "Show"} agent reasoning
             </button>
             {expanded && (
-              <div
-                className="mt-2 text-xs text-muted-foreground leading-relaxed bg-secondary rounded-xl p-3 border border-border"
-                style={{ maxHeight: "20rem", overflowY: "scroll" }}
-              >
+              <div className="mt-2 text-xs text-muted-foreground leading-relaxed bg-secondary rounded-xl p-3 border border-border">
                 {proposal.notes}
               </div>
             )}

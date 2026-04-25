@@ -149,6 +149,7 @@ export async function runSellerAgent(
     schemaDescription: "A Letter of Intent proposal from the seller in an M&A negotiation",
     system: buildSellerSystemPrompt(sellerMandate),
     prompt: buildUserMessage(negotiationState, incomingProposal),
+    maxOutputTokens: 2000,
   })
 
   const session = getSession(sessionId)
