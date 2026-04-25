@@ -1,5 +1,11 @@
-// Routes through Vercel AI Gateway — no provider SDK needed
-export const NEGOTIATION_MODEL = "anthropic/claude-sonnet-4.6"
+import { createOpenAI } from "@ai-sdk/openai"
+
+const openai = createOpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+})
+
+// gpt-4o supports structured output (generateObject) and function calling
+export const NEGOTIATION_MODEL = openai("gpt-4o")
 
 export const SYSTEM_PROMPT = `You are a neutral M&A negotiation facilitator. Your role is to:
 1. Analyze positions from both buyer and seller parties

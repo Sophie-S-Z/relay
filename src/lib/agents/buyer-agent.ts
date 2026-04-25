@@ -110,9 +110,6 @@ export async function runBuyerAgent(
     schemaDescription: "A Letter of Intent proposal from the buyer in an M&A negotiation",
     system: buildBuyerSystemPrompt(buyerMandate),
     prompt: buildUserMessage(negotiationState, incomingProposal),
-    providerOptions: {
-      gateway: { tags: ["feature:buyer-agent"] },
-    },
   })
 
   const session = getSession(sessionId)

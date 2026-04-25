@@ -12,11 +12,6 @@ export async function POST(req: Request) {
     model: NEGOTIATION_MODEL,
     system: SYSTEM_PROMPT,
     messages,
-    providerOptions: {
-      gateway: {
-        tags: ["feature:negotiation", "env:production"],
-      },
-    },
     onFinish: ({ text }) => {
       if (session) {
         const msg: AgentMessage = {
