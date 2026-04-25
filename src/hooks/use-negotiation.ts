@@ -4,6 +4,7 @@ import { useCallback, useRef, useState } from "react"
 import type { NegotiationEvent } from "@/lib/negotiation-engine"
 import type { LOIProposal } from "@/lib/agents/types"
 import type { NegotiationSummary } from "@/lib/concession"
+import type { CheckpointType, ThresholdTrigger } from "@/lib/checkpoint-store"
 
 export type NegotiationStatus = "idle" | "running" | "checkpoint" | "agreed" | "complete" | "error"
 
@@ -14,6 +15,8 @@ export interface NegotiationUIState {
   proposals: LOIProposal[]
   convergenceHistory: { round: number; buyerPrice: number; sellerPrice: number; score: number }[]
   checkpointReason?: string
+  checkpointType?: CheckpointType
+  thresholdInfo?: ThresholdTrigger
   summary?: NegotiationSummary
   error?: string
 }
@@ -171,6 +174,8 @@ function handleEvent(
       case "checkpoint":
         next.status = "checkpoint"
         next.checkpointReason = event.checkpointReason
+        next.checkpointType = event.checkpointType
+        next.thresholdInfo = event.thresholdInfo
         break
       case "agreed":
         next.status = "agreed"

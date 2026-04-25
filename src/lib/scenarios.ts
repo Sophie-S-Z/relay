@@ -103,6 +103,13 @@ export const DEMO_SELLER_MANDATE: SellerMandate = {
     "Will not accept less than 60% cash at closing",
     "No clawback provisions on earned compensation",
   ],
+
+  // Human-in-the-loop threshold alerts — seller (Sarah Chen) wants to know:
+  thresholds: {
+    alertWhenBuyerReaches: 3_000_000,  // Alert when buyer hits $3M — strong signal to consider accepting
+    alertIfCashBelowPct: 60,           // Alert if cash at close drops below her hard-no of 60%
+    alertIfEarnoutAbovePct: 20,        // Alert if earnout exceeds 20% of deal value
+  },
 }
 
 // ─── BUYER MANDATE ────────────────────────────────────────────
@@ -129,6 +136,13 @@ export const DEMO_BUYER_MANDATE: BuyerMandate = {
     "Minimum 60 days due diligence",
     "Seller must stay at least 2 months for transition",
   ],
+
+  // Human-in-the-loop threshold alerts — buyer (James Park) wants to know:
+  thresholds: {
+    alertWhenSellerReaches: 3_100_000,  // Alert when seller drops to $3.1M — real buying signal
+    alertIfSellerNoteAbovePct: 15,       // Alert if seller note exceeds 15% of deal value
+    alertIfConcessionAbove: 200_000,     // Alert if single-round concession exceeds $200K
+  },
 }
 
 // ─── INITIAL NEGOTIATION STATE ────────────────────────────────

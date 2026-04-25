@@ -7,11 +7,12 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import {
   ArrowRight, Play, RotateCcw, CheckCircle, Clock, Zap,
-  AlertCircle, ChevronDown, ChevronUp, TrendingDown
+  AlertCircle, ChevronDown, ChevronUp, TrendingDown, Eye, Bell, ShieldAlert, Handshake
 } from "lucide-react"
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts"
 import { useNegotiation } from "@/hooks/use-negotiation"
 import type { LOIProposal } from "@/lib/agents/types"
+import type { CheckpointType, ThresholdTrigger } from "@/lib/checkpoint-store"
 import { useState } from "react"
 import Link from "next/link"
 
@@ -125,6 +126,107 @@ function ProposalCard({ proposal, index }: { proposal: LOIProposal; index: numbe
   )
 }
 
+function CheckpointPanel({
+  checkpointType,
+  checkpointReason,
+  thresholdInfo,
+  onApprove,
+  onReject,
+}: {
+  checkpointType?: CheckpointType
+  checkpointReason?: string
+  thresholdInfo?: ThresholdTrigger
+  onApprove: () => void
+  onReject: () => void
+}) {
+  const config: Record<CheckpointType, { icon: React.ReactNode; title: string; borderColor: string; iconBg: string; approveLabel: string }> = {
+    pre_opening: {
+      icon: <Eye className="h-5 w-5 text-foreground" />,
+      title: "Review Opening Offer",
+      borderColor: "border-sky",
+      iconBg: "bg-sky/50",
+      approveLabel: "Send to Seller",
+    },
+    threshold: {
+      icon: <Bell className="h-5 w-5 text-foreground" />,
+      title: "Alert Threshold Reached",
+      borderColor: "border-amber-300",
+      iconBg: "bg-amber-100",
+      approveLabel: "Continue Negotiation",
+    },
+    escalate: {
+      icon: <ShieldAlert className="h-5 w-5 text-foreground" />,
+      title: "Agent Escalation",
+      borderColor: "border-red-300",
+      iconBg: "bg-red-50",
+      approveLabel: "Approve & Continue",
+    },
+    pre_acceptance: {
+      icon: <Handshake className="h-5 w-5 text-foreground" />,
+      title: "Confirm Final Terms",
+      borderColor: "border-lime/60",
+      iconBg: "bg-lime/20",
+      approveLabel: "Accept & Generate LOI",
+    },
+  }
+
+  const type = checkpointType ?? "escalate"
+  const { icon, title, borderColor, iconBg, approveLabel } = config[type]
+
+  return (
+    <div className={`bg-card border-2 ${borderColor} rounded-2xl p-5`}>
+      <div className="flex items-start gap-3">
+        <div className={`w-9 h-9 rounded-full ${iconBg} flex items-center justify-center flex-shrink-0`}>
+          {icon}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1">
+            <h3 className="font-semibold text-foreground text-sm">{title}</h3>
+            <Badge className="text-[10px] rounded-full px-2 bg-secondary text-muted-foreground border-border capitalize">
+              {type.replace("_", " ")}
+            </Badge>
+          </div>
+          <p className="text-sm text-muted-foreground mb-3 leading-relaxed">
+            {checkpointReason ?? "An agent has flagged this moment for your review."}
+          </p>
+          {thresholdInfo && (
+            <div className="bg-secondary rounded-xl p-3 mb-4 text-xs space-y-1.5 border border-border">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Triggered value</span>
+                <span className="font-mono font-semibold text-foreground">
+                  {thresholdInfo.triggeredValue % 1 === 0 && thresholdInfo.triggeredValue > 1000
+                    ? `$${thresholdInfo.triggeredValue.toLocaleString()}`
+                    : `${thresholdInfo.triggeredValue.toFixed(1)}%`}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Your alert was set at</span>
+                <span className="font-mono font-medium text-foreground">
+                  {thresholdInfo.thresholdValue % 1 === 0 && thresholdInfo.thresholdValue > 1000
+                    ? `$${thresholdInfo.thresholdValue.toLocaleString()}`
+                    : `${thresholdInfo.thresholdValue}%`}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Alerted party</span>
+                <span className="font-medium text-foreground capitalize">{thresholdInfo.party}</span>
+              </div>
+            </div>
+          )}
+          <div className="flex gap-2">
+            <Button size="sm" onClick={onApprove} className="bg-foreground hover:bg-foreground/90 text-background h-8 text-xs rounded-full">
+              {approveLabel}
+            </Button>
+            <Button size="sm" variant="outline" onClick={onReject} className="text-foreground border-border hover:bg-secondary h-8 text-xs rounded-full">
+              Reject &amp; End
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function NegotiatePage() {
   const router = useRouter()
   const { state, start, reset, approveCheckpoint, rejectCheckpoint } = useNegotiation()
@@ -233,19 +335,13 @@ export default function NegotiatePage() {
                 )}
 
                 {state.status === "checkpoint" && (
-                  <div className="bg-card border-2 border-lime/50 rounded-2xl p-5">
-                    <div className="flex items-start gap-3">
-                      <AlertCircle className="h-5 w-5 text-foreground flex-shrink-0 mt-0.5" />
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-foreground text-sm mb-1">Human Approval Required</h3>
-                        <p className="text-sm text-muted-foreground mb-4">{state.checkpointReason ?? "An agent has flagged this for review."}</p>
-                        <div className="flex gap-2">
-                          <Button size="sm" onClick={approveCheckpoint} className="bg-foreground hover:bg-foreground/90 text-background h-8 text-xs rounded-full">Approve &amp; Continue</Button>
-                          <Button size="sm" variant="outline" onClick={rejectCheckpoint} className="text-foreground border-border hover:bg-secondary h-8 text-xs rounded-full">Reject</Button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                  <CheckpointPanel
+                    checkpointType={state.checkpointType}
+                    checkpointReason={state.checkpointReason}
+                    thresholdInfo={state.thresholdInfo}
+                    onApprove={approveCheckpoint}
+                    onReject={rejectCheckpoint}
+                  />
                 )}
 
                 {isDone && (

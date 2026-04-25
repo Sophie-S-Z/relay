@@ -226,6 +226,19 @@ export interface QualificationResult {
   analystNotes: string
 }
 
+// Human-configurable threshold that triggers a mid-negotiation checkpoint
+export interface SellerThresholds {
+  alertWhenBuyerReaches?: number    // Alert seller when buyer's offer climbs to this value (e.g. $3M)
+  alertIfCashBelowPct?: number      // Alert if cash-at-close % drops below this (e.g. 60)
+  alertIfEarnoutAbovePct?: number   // Alert if earnout % exceeds this (e.g. 20)
+}
+
+export interface BuyerThresholds {
+  alertWhenSellerReaches?: number   // Alert buyer when seller's ask falls to this value (e.g. $3.1M)
+  alertIfSellerNoteAbovePct?: number // Alert if seller note % exceeds this (e.g. 15)
+  alertIfConcessionAbove?: number   // Alert if a single price concession exceeds this amount (e.g. $200K)
+}
+
 export interface SellerMandate {
   // Confidential — interpolated server-side into system prompt only, never sent to buyer
   minPrice: number          // walk-away floor; going below triggers "escalate"
@@ -241,6 +254,9 @@ export interface SellerMandate {
   earnoutWillingness: string // e.g. "willing if metric is gross revenue, max 12 months"
   exclusivityWillingnessDays: number | null // max exclusivity period seller will grant
   hardNos: string[]         // absolute dealbreakers, e.g. ["asset-only sale", "stay > 3 months"]
+
+  // Human-in-the-loop threshold alerts (user-configurable)
+  thresholds?: SellerThresholds
 }
 
 export interface SellerAgentInput {
@@ -272,4 +288,7 @@ export interface BuyerMandate {
   exclusivityDays: number       // exclusivity period desired (days)
   closingTimelineDays: number   // target days to close from LOI signing
   hardConstraints: string[]     // absolute limits, e.g. ["no seller note > 20%", "no stock rollover"]
+
+  // Human-in-the-loop threshold alerts (user-configurable)
+  thresholds?: BuyerThresholds
 }
