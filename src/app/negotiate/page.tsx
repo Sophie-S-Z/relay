@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import {
   ArrowRight, Play, RotateCcw, CheckCircle, Clock, Zap,
-  AlertCircle, ChevronDown, ChevronUp, TrendingDown, Eye, Bell, ShieldAlert, Handshake
+  ChevronDown, ChevronUp, TrendingDown, Eye, Bell, ShieldAlert, Handshake, Loader2
 } from "lucide-react"
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts"
 import { useNegotiation } from "@/hooks/use-negotiation"
@@ -25,13 +25,18 @@ function pct(n: number) {
   return `${(n * 100).toFixed(0)}%`
 }
 
-function TermPill({ label, value, sub, accent }: { label: string; value: string; sub?: string; accent?: "buyer" | "seller" }) {
-  const bg = accent === "buyer" ? "bg-sky/50 border-sky" : accent === "seller" ? "bg-lime/20 border-lime/50" : "bg-secondary border-border"
-  const val = accent === "buyer" ? "text-foreground" : accent === "seller" ? "text-foreground" : "text-foreground"
+function TermPill({ label, value, sub, accent }: {
+  label: string; value: string; sub?: string; accent?: "buyer" | "seller"
+}) {
+  const bg = accent === "buyer"
+    ? "bg-sky/50 border-sky"
+    : accent === "seller"
+    ? "bg-lime/20 border-lime/50"
+    : "bg-secondary border-border"
   return (
     <div className={`px-3 py-2 rounded-xl border ${bg}`}>
       <div className="text-[10px] text-muted-foreground mb-0.5 uppercase tracking-wide">{label}</div>
-      <div className={`text-sm font-semibold font-mono ${val}`}>{value}</div>
+      <div className="text-sm font-semibold font-mono text-foreground">{value}</div>
       {sub && <div className="text-[10px] text-muted-foreground">{sub}</div>}
     </div>
   )
@@ -47,12 +52,12 @@ function ProposalCard({ proposal, index }: { proposal: LOIProposal; index: numbe
   return (
     <div className={`relative flex ${isBuyer ? "justify-start" : "justify-end"}`}>
       <div className="absolute left-[18px] top-8 bottom-0 w-px bg-border -z-0" aria-hidden />
-
-      <div className={`w-[calc(100%-32px)] rounded-2xl border p-4 relative bg-card ${
-        isBuyer ? "border-border" : "border-border ml-8"
-      } ${isAccepted ? "ring-2 ring-lime shadow-sm" : ""}
-        ${isEscalate ? "ring-2 ring-amber-300" : ""}`}
-      >
+      <div className={[
+        "w-[calc(100%-32px)] rounded-2xl border p-4 relative bg-card",
+        isBuyer ? "border-border" : "border-border ml-8",
+        isAccepted ? "ring-2 ring-lime shadow-sm" : "",
+        isEscalate ? "ring-2 ring-amber-300" : "",
+      ].filter(Boolean).join(" ")}>
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2.5">
             <div className={`w-7 h-7 rounded-full flex items-center justify-center text-foreground text-xs font-bold flex-shrink-0 ${isBuyer ? "bg-sky" : "bg-lime"}`}>
@@ -70,14 +75,10 @@ function ProposalCard({ proposal, index }: { proposal: LOIProposal; index: numbe
               </div>
             </div>
           </div>
-          <div className="text-right">
-            <div className={`text-xl font-bold font-mono text-foreground`}>
-              {fmt(proposal.purchasePrice)}
-            </div>
-          </div>
+          <div className="text-xl font-bold font-mono text-foreground">{fmt(proposal.purchasePrice)}</div>
         </div>
 
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 mb-3">
           <TermPill
             label="Cash at Close"
             value={fmt(proposal.priceStructure.cashAtClose)}
@@ -106,16 +107,16 @@ function ProposalCard({ proposal, index }: { proposal: LOIProposal; index: numbe
         </div>
 
         {proposal.notes && (
-          <div className="mt-3">
+          <div>
             <button
               onClick={() => setExpanded(!expanded)}
-              className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+              className="flex items-center gap-1.5 text-[11px] text-muted-foreground hover:text-foreground transition-colors w-full text-left"
             >
-              {expanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-              Agent reasoning
+              {expanded ? <ChevronUp className="h-3 w-3 flex-shrink-0" /> : <ChevronDown className="h-3 w-3 flex-shrink-0" />}
+              <span>Agent reasoning {expanded ? "" : "— click to expand"}</span>
             </button>
             {expanded && (
-              <div className="mt-2 text-xs text-muted-foreground leading-relaxed bg-secondary rounded-xl p-3 border border-border">
+              <div className="mt-2 text-xs text-muted-foreground leading-relaxed bg-secondary rounded-xl p-3 border border-border max-h-64 overflow-y-auto whitespace-pre-wrap">
                 {proposal.notes}
               </div>
             )}
@@ -139,89 +140,98 @@ function CheckpointPanel({
   onApprove: () => void
   onReject: () => void
 }) {
-  const config: Record<CheckpointType, { icon: React.ReactNode; title: string; borderColor: string; iconBg: string; approveLabel: string }> = {
+  type CfgEntry = { icon: React.ReactNode; title: string; borderColor: string; bg: string; approveLabel: string }
+  const config: Record<CheckpointType, CfgEntry> = {
     pre_opening: {
-      icon: <Eye className="h-5 w-5 text-foreground" />,
+      icon: <Eye className="h-5 w-5 text-sky-600" />,
       title: "Review Opening Offer",
       borderColor: "border-sky",
-      iconBg: "bg-sky/50",
-      approveLabel: "Send to Seller",
+      bg: "bg-sky/10",
+      approveLabel: "Send to Seller →",
     },
     threshold: {
-      icon: <Bell className="h-5 w-5 text-foreground" />,
+      icon: <Bell className="h-5 w-5 text-amber-600" />,
       title: "Alert Threshold Reached",
-      borderColor: "border-amber-300",
-      iconBg: "bg-amber-100",
-      approveLabel: "Continue Negotiation",
+      borderColor: "border-amber-400",
+      bg: "bg-amber-50",
+      approveLabel: "Acknowledge & Continue →",
     },
     escalate: {
-      icon: <ShieldAlert className="h-5 w-5 text-foreground" />,
-      title: "Agent Escalation",
-      borderColor: "border-red-300",
-      iconBg: "bg-red-50",
-      approveLabel: "Approve & Continue",
+      icon: <ShieldAlert className="h-5 w-5 text-red-600" />,
+      title: "Agent Escalation — Your Decision Needed",
+      borderColor: "border-red-400",
+      bg: "bg-red-50",
+      approveLabel: "Approve & Continue →",
     },
     pre_acceptance: {
-      icon: <Handshake className="h-5 w-5 text-foreground" />,
-      title: "Confirm Final Terms",
-      borderColor: "border-lime/60",
-      iconBg: "bg-lime/20",
-      approveLabel: "Accept & Generate LOI",
+      icon: <Handshake className="h-5 w-5 text-lime-700" />,
+      title: "Both Sides Ready to Close — Final Approval",
+      borderColor: "border-lime",
+      bg: "bg-lime/10",
+      approveLabel: "Accept & Generate LOI →",
     },
   }
 
   const type = checkpointType ?? "escalate"
-  const { icon, title, borderColor, iconBg, approveLabel } = config[type]
+  const { icon, title, borderColor, bg, approveLabel } = config[type]
 
   return (
-    <div className={`bg-card border-2 ${borderColor} rounded-2xl p-5`}>
-      <div className="flex items-start gap-3">
-        <div className={`w-9 h-9 rounded-full ${iconBg} flex items-center justify-center flex-shrink-0`}>
-          {icon}
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
-            <h3 className="font-semibold text-foreground text-sm">{title}</h3>
-            <Badge className="text-[10px] rounded-full px-2 bg-secondary text-muted-foreground border-border capitalize">
-              {type.replace("_", " ")}
-            </Badge>
+    <div className={`rounded-2xl border-2 ${borderColor} ${bg} p-5`}>
+      {/* header */}
+      <div className="flex items-center gap-2.5 mb-3">
+        <div className="flex-shrink-0">{icon}</div>
+        <h3 className="font-bold text-foreground text-sm">{title}</h3>
+        <Badge className="ml-auto text-[10px] rounded-full px-2 py-0.5 bg-background/60 text-muted-foreground border border-border capitalize">
+          {type.replace("_", " ")}
+        </Badge>
+      </div>
+
+      {/* reason */}
+      <p className="text-sm text-foreground/80 leading-relaxed mb-4">
+        {checkpointReason ?? "An agent has flagged this moment for your review."}
+      </p>
+
+      {/* threshold detail table */}
+      {thresholdInfo && (
+        <div className="bg-background/70 rounded-xl border border-border p-3 mb-4 text-xs space-y-2">
+          <div className="flex justify-between items-center">
+            <span className="text-muted-foreground">Value that triggered alert</span>
+            <span className="font-mono font-bold text-foreground">
+              {thresholdInfo.triggeredValue > 1000 && Number.isInteger(thresholdInfo.triggeredValue)
+                ? `$${thresholdInfo.triggeredValue.toLocaleString()}`
+                : `${thresholdInfo.triggeredValue.toFixed(1)}%`}
+            </span>
           </div>
-          <p className="text-sm text-muted-foreground mb-3 leading-relaxed">
-            {checkpointReason ?? "An agent has flagged this moment for your review."}
-          </p>
-          {thresholdInfo && (
-            <div className="bg-secondary rounded-xl p-3 mb-4 text-xs space-y-1.5 border border-border">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Triggered value</span>
-                <span className="font-mono font-semibold text-foreground">
-                  {thresholdInfo.triggeredValue % 1 === 0 && thresholdInfo.triggeredValue > 1000
-                    ? `$${thresholdInfo.triggeredValue.toLocaleString()}`
-                    : `${thresholdInfo.triggeredValue.toFixed(1)}%`}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Your alert was set at</span>
-                <span className="font-mono font-medium text-foreground">
-                  {thresholdInfo.thresholdValue % 1 === 0 && thresholdInfo.thresholdValue > 1000
-                    ? `$${thresholdInfo.thresholdValue.toLocaleString()}`
-                    : `${thresholdInfo.thresholdValue}%`}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Alerted party</span>
-                <span className="font-medium text-foreground capitalize">{thresholdInfo.party}</span>
-              </div>
-            </div>
-          )}
-          <div className="flex gap-2">
-            <Button size="sm" onClick={onApprove} className="bg-foreground hover:bg-foreground/90 text-background h-8 text-xs rounded-full">
-              {approveLabel}
-            </Button>
-            <Button size="sm" variant="outline" onClick={onReject} className="text-foreground border-border hover:bg-secondary h-8 text-xs rounded-full">
-              Reject &amp; End
-            </Button>
+          <div className="flex justify-between items-center">
+            <span className="text-muted-foreground">Alert was configured at</span>
+            <span className="font-mono text-foreground">
+              {thresholdInfo.thresholdValue > 1000 && Number.isInteger(thresholdInfo.thresholdValue)
+                ? `$${thresholdInfo.thresholdValue.toLocaleString()}`
+                : `${thresholdInfo.thresholdValue}%`}
+            </span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-muted-foreground">Notified party</span>
+            <span className="font-medium text-foreground capitalize">{thresholdInfo.party}</span>
           </div>
         </div>
+      )}
+
+      {/* action buttons */}
+      <div className="flex gap-2.5">
+        <Button
+          onClick={onApprove}
+          className="bg-foreground hover:bg-foreground/90 text-background h-9 px-5 text-xs font-semibold rounded-full"
+        >
+          {approveLabel}
+        </Button>
+        <Button
+          variant="outline"
+          onClick={onReject}
+          className="border-border text-foreground hover:bg-background/80 h-9 px-4 text-xs rounded-full"
+        >
+          Reject &amp; End
+        </Button>
       </div>
     </div>
   )
@@ -230,15 +240,25 @@ function CheckpointPanel({
 export default function NegotiatePage() {
   const router = useRouter()
   const { state, start, reset, approveCheckpoint, rejectCheckpoint } = useNegotiation()
+  const checkpointRef = useRef<HTMLDivElement>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
 
+  // Scroll to bottom when new proposals arrive
   useEffect(() => {
     if (state.proposals.length > 0) {
       bottomRef.current?.scrollIntoView({ behavior: "smooth" })
     }
   }, [state.proposals.length])
 
+  // Scroll to checkpoint panel whenever it fires so the user never misses it
+  useEffect(() => {
+    if (state.status === "checkpoint") {
+      setTimeout(() => checkpointRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }), 80)
+    }
+  }, [state.status])
+
   const isRunning = state.status === "running"
+  const isCheckpoint = state.status === "checkpoint"
   const isDone = state.status === "agreed" || state.status === "complete"
   const isAgreed = state.status === "agreed"
 
@@ -246,11 +266,11 @@ export default function NegotiatePage() {
   const latestSeller = [...state.proposals].reverse().find(p => p.proposingParty === "seller")
   const gap = latestSeller && latestBuyer ? latestSeller.purchasePrice - latestBuyer.purchasePrice : null
   const gapPct = gap !== null && latestSeller ? (gap / latestSeller.purchasePrice) * 100 : null
-
   const latestScore = state.convergenceHistory[state.convergenceHistory.length - 1]?.score ?? 0
 
   return (
     <div className="min-h-screen bg-background">
+      {/* ── Nav ── */}
       <nav className="bg-background/80 backdrop-blur-sm border-b border-border sticky top-0 z-50">
         <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -264,8 +284,13 @@ export default function NegotiatePage() {
           <div className="flex items-center gap-2.5">
             {isRunning && (
               <div className="flex items-center gap-1.5 text-xs text-foreground font-medium">
-                <div className="w-1.5 h-1.5 rounded-full bg-lime animate-pulse" />
-                Agents active
+                <Loader2 className="h-3 w-3 animate-spin text-lime" />
+                Agent working…
+              </div>
+            )}
+            {isCheckpoint && (
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground bg-amber-100 border border-amber-300 rounded-full px-3 py-1">
+                ⚠ Your approval needed
               </div>
             )}
             {isAgreed && <Badge className="bg-lime/30 text-foreground border-lime/50 rounded-full text-xs">Deal reached</Badge>}
@@ -282,6 +307,7 @@ export default function NegotiatePage() {
           {/* ── LEFT: Timeline ── */}
           <div className="col-span-2 space-y-3">
 
+            {/* IDLE: start card */}
             {state.status === "idle" && (
               <div className="bg-card border border-border rounded-2xl p-10 text-center">
                 <div className="w-14 h-14 rounded-2xl bg-lime flex items-center justify-center mx-auto mb-5">
@@ -312,84 +338,102 @@ export default function NegotiatePage() {
               </div>
             )}
 
+            {/* LOADING: buyer is working before first proposal arrives */}
+            {(isRunning || isCheckpoint) && state.proposals.length === 0 && (
+              <div className="bg-card border border-border rounded-2xl p-8 text-center">
+                <Loader2 className="h-8 w-8 animate-spin text-lime mx-auto mb-4" />
+                <p className="text-sm font-medium text-foreground">Buyer agent is analyzing the deal…</p>
+                <p className="text-xs text-muted-foreground mt-1">Reviewing financials, comps, and risk factors</p>
+              </div>
+            )}
+
+            {/* TIMELINE: proposals */}
             {state.proposals.length > 0 && (
               <div className="space-y-2.5">
                 <div className="flex items-center justify-between px-1">
                   <h2 className="text-sm font-semibold text-foreground">Negotiation Timeline</h2>
-                  <span className="text-xs text-muted-foreground">{Math.ceil(state.proposals.length / 2)} rounds · {state.proposals.length} proposals</span>
+                  <span className="text-xs text-muted-foreground">
+                    {Math.ceil(state.proposals.length / 2)} round{Math.ceil(state.proposals.length / 2) !== 1 ? "s" : ""} · {state.proposals.length} proposal{state.proposals.length !== 1 ? "s" : ""}
+                  </span>
                 </div>
 
                 {state.proposals.map((p, i) => (
                   <ProposalCard key={p.id || i} proposal={p} index={i} />
                 ))}
 
+                {/* Running spinner between proposals */}
                 {isRunning && (
                   <div className="flex items-center gap-2 px-4 py-3 text-sm text-muted-foreground">
-                    <div className="flex gap-0.5">
-                      {[0, 150, 300].map(d => (
-                        <div key={d} className="w-1.5 h-1.5 rounded-full bg-lime/60 animate-bounce" style={{ animationDelay: `${d}ms` }} />
-                      ))}
-                    </div>
-                    <span className="text-xs">Agent formulating response...</span>
-                  </div>
-                )}
-
-                {state.status === "checkpoint" && (
-                  <CheckpointPanel
-                    checkpointType={state.checkpointType}
-                    checkpointReason={state.checkpointReason}
-                    thresholdInfo={state.thresholdInfo}
-                    onApprove={approveCheckpoint}
-                    onReject={rejectCheckpoint}
-                  />
-                )}
-
-                {isDone && (
-                  <div className={`rounded-2xl p-6 border-2 bg-card ${isAgreed ? "border-lime/50" : "border-border"}`}>
-                    <div className="flex items-center gap-4">
-                      <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${isAgreed ? "bg-lime" : "bg-secondary"}`}>
-                        {isAgreed
-                          ? <CheckCircle className="h-6 w-6 text-foreground" />
-                          : <Clock className="h-6 w-6 text-muted-foreground" />
-                        }
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-foreground">{isAgreed ? "Deal Reached" : "Negotiation Complete"}</h3>
-                        {state.summary && isAgreed && (
-                          <p className="text-sm text-muted-foreground mt-0.5">
-                            {fmt(state.proposals[state.proposals.length - 1]?.purchasePrice || 0)} · {state.summary.totalRounds} rounds · {(state.summary.fairnessScore * 100).toFixed(0)}% fairness
-                          </p>
-                        )}
-                        {!isAgreed && (
-                          <p className="text-sm text-muted-foreground mt-0.5">{state.round} rounds completed</p>
-                        )}
-                      </div>
-                      <div className="flex gap-2">
-                        <Button
-                          onClick={() => router.push("/deal")}
-                          className="bg-foreground hover:bg-foreground/90 text-background gap-1.5 h-9 text-sm rounded-full"
-                        >
-                          Deal Summary <ArrowRight className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button variant="outline" onClick={reset} className="gap-1.5 h-9 text-sm rounded-full border-border">
-                          <RotateCcw className="h-3.5 w-3.5" /> Again
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {state.status === "error" && (
-                  <div className="bg-card border border-border rounded-2xl p-4">
-                    <p className="text-sm font-semibold text-foreground mb-1">Negotiation error</p>
-                    <p className="text-xs text-muted-foreground">{state.error ?? "Connection failed. Please retry."}</p>
-                    <Button size="sm" variant="outline" onClick={reset} className="mt-3 gap-1.5 h-8 text-xs rounded-full">
-                      <RotateCcw className="h-3 w-3" /> Retry
-                    </Button>
+                    <Loader2 className="h-3.5 w-3.5 animate-spin text-lime flex-shrink-0" />
+                    <span className="text-xs">
+                      {state.proposals[state.proposals.length - 1]?.proposingParty === "buyer"
+                        ? "Seller agent reviewing and preparing counter-offer…"
+                        : "Buyer agent reviewing and preparing counter-offer…"}
+                    </span>
                   </div>
                 )}
 
                 <div ref={bottomRef} />
+              </div>
+            )}
+
+            {/* ── CHECKPOINT PANEL ── shown at column level, always visible */}
+            {isCheckpoint && (
+              <div ref={checkpointRef}>
+                <CheckpointPanel
+                  checkpointType={state.checkpointType}
+                  checkpointReason={state.checkpointReason}
+                  thresholdInfo={state.thresholdInfo}
+                  onApprove={approveCheckpoint}
+                  onReject={rejectCheckpoint}
+                />
+              </div>
+            )}
+
+            {/* DONE */}
+            {isDone && (
+              <div className={`rounded-2xl p-6 border-2 bg-card ${isAgreed ? "border-lime/50" : "border-border"}`}>
+                <div className="flex items-center gap-4">
+                  <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${isAgreed ? "bg-lime" : "bg-secondary"}`}>
+                    {isAgreed
+                      ? <CheckCircle className="h-6 w-6 text-foreground" />
+                      : <Clock className="h-6 w-6 text-muted-foreground" />
+                    }
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-foreground">{isAgreed ? "Deal Reached" : "Negotiation Complete"}</h3>
+                    {state.summary && isAgreed && (
+                      <p className="text-sm text-muted-foreground mt-0.5">
+                        {fmt(state.proposals[state.proposals.length - 1]?.purchasePrice || 0)} · {state.summary.totalRounds} rounds · {(state.summary.fairnessScore * 100).toFixed(0)}% fairness score
+                      </p>
+                    )}
+                    {!isAgreed && (
+                      <p className="text-sm text-muted-foreground mt-0.5">{state.round} rounds completed</p>
+                    )}
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={() => router.push("/deal")}
+                      className="bg-foreground hover:bg-foreground/90 text-background gap-1.5 h-9 text-sm rounded-full"
+                    >
+                      Deal Summary <ArrowRight className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button variant="outline" onClick={reset} className="gap-1.5 h-9 text-sm rounded-full border-border">
+                      <RotateCcw className="h-3.5 w-3.5" /> Again
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ERROR */}
+            {state.status === "error" && (
+              <div className="bg-card border border-red-200 rounded-2xl p-5">
+                <p className="text-sm font-semibold text-foreground mb-1">Negotiation error</p>
+                <p className="text-xs text-muted-foreground mb-3">{state.error ?? "Connection failed. Please retry."}</p>
+                <Button size="sm" variant="outline" onClick={reset} className="gap-1.5 h-8 text-xs rounded-full">
+                  <RotateCcw className="h-3 w-3" /> Start Over
+                </Button>
               </div>
             )}
           </div>
@@ -402,15 +446,13 @@ export default function NegotiatePage() {
               <div className="space-y-2.5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5 text-xs text-foreground">
-                    <div className="w-2 h-2 rounded-full bg-lime" />
-                    Seller ask
+                    <div className="w-2 h-2 rounded-full bg-lime" />Seller ask
                   </div>
                   <span className="font-mono font-semibold text-sm text-foreground">{latestSeller ? fmt(latestSeller.purchasePrice) : "—"}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5 text-xs text-foreground">
-                    <div className="w-2 h-2 rounded-full bg-sky-400" />
-                    Buyer offer
+                    <div className="w-2 h-2 rounded-full bg-sky-400" />Buyer offer
                   </div>
                   <span className="font-mono font-semibold text-sm text-foreground">{latestBuyer ? fmt(latestBuyer.purchasePrice) : "—"}</span>
                 </div>
@@ -419,8 +461,7 @@ export default function NegotiatePage() {
                     <Separator />
                     <div className="flex items-center justify-between text-xs">
                       <div className="flex items-center gap-1.5 text-muted-foreground">
-                        <TrendingDown className="h-3 w-3" />
-                        Gap
+                        <TrendingDown className="h-3 w-3" />Gap
                       </div>
                       <span className="font-mono font-medium text-foreground">{fmt(gap)}</span>
                     </div>
@@ -479,6 +520,27 @@ export default function NegotiatePage() {
               </div>
             )}
 
+            {/* How many approvals remain */}
+            {(isRunning || isCheckpoint) && !isDone && (
+              <div className="bg-card border border-border rounded-2xl p-4">
+                <div className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide mb-2">Human Checkpoints</div>
+                <div className="space-y-1.5 text-xs">
+                  <div className={`flex items-center gap-2 ${state.round >= 1 ? "text-foreground" : "text-muted-foreground"}`}>
+                    <CheckCircle className="h-3 w-3 text-lime flex-shrink-0" />
+                    Pre-opening review
+                  </div>
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <div className="w-3 h-3 rounded-full border border-border flex-shrink-0" />
+                    Threshold alerts (if any)
+                  </div>
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <div className="w-3 h-3 rounded-full border border-border flex-shrink-0" />
+                    Final terms approval
+                  </div>
+                </div>
+              </div>
+            )}
+
             {state.summary && (
               <div className="bg-foreground text-background rounded-2xl p-4">
                 <div className="text-[11px] font-semibold text-background/40 uppercase tracking-wide mb-3">Fee Comparison</div>
@@ -504,6 +566,7 @@ export default function NegotiatePage() {
               </div>
             )}
           </div>
+
         </div>
       </div>
     </div>

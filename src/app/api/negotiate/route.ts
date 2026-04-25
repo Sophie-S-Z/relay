@@ -1,3 +1,5 @@
+export const maxDuration = 300 // allow up to 5 minutes for multi-round streaming on Vercel Pro
+
 import type { SellerMandate, BuyerMandate, SellerOnboardingData, BuyerProfile } from "@/lib/agents/types"
 import { runNegotiation, type NegotiationEvent, type ResumeState } from "@/lib/negotiation-engine"
 import {
