@@ -325,7 +325,7 @@ export default function NegotiatePage() {
                     <CartesianGrid strokeDasharray="3 3" stroke="#f5f5f4" />
                     <XAxis dataKey="round" tick={{ fontSize: 10 }} label={{ value: "Round", position: "insideBottom", offset: -5, fontSize: 10 }} />
                     <YAxis tick={{ fontSize: 10 }} tickFormatter={v => `$${(v/1e6).toFixed(1)}M`} width={45} />
-                    <Tooltip formatter={(v: number) => [fmt(v)]} />
+                    <Tooltip formatter={(v) => [fmt(Number(v ?? 0))]} />
                     <Line type="monotone" dataKey="sellerPrice" stroke="#10B981" strokeWidth={2} dot={{ r: 3 }} name="Seller" />
                     <Line type="monotone" dataKey="buyerPrice" stroke="#3B82F6" strokeWidth={2} dot={{ r: 3 }} name="Buyer" />
                   </LineChart>

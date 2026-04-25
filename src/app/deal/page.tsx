@@ -169,7 +169,7 @@ export default function DealPage() {
               <BarChart data={feeData} layout="vertical">
                 <XAxis type="number" tick={{ fontSize: 10 }} tickFormatter={v => `$${(v/1000).toFixed(0)}k`} />
                 <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} width={100} />
-                <Tooltip formatter={(v: number) => [fmt(v)]} />
+                <Tooltip formatter={(v) => [fmt(Number(v ?? 0))]} />
                 <Bar dataKey="value" radius={4}>
                   {feeData.map((entry, i) => <Cell key={i} fill={entry.color} />)}
                 </Bar>

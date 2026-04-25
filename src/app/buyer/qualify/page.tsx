@@ -32,7 +32,7 @@ export default function BuyerQualifyPage() {
     financingCapacity: "",
   })
 
-  const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }))
+  const set = (k: string, v: string | null) => setForm(f => ({ ...f, [k]: v ?? "" }))
 
   const handleSubmit = async () => {
     setLoading(true)

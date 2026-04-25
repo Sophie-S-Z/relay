@@ -131,7 +131,7 @@ export default function CIMPage() {
                     <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                     <XAxis dataKey="year" tick={{ fontSize: 12 }} />
                     <YAxis tick={{ fontSize: 12 }} tickFormatter={v => `$${v}M`} />
-                    <Tooltip formatter={(v: number) => [`$${v}M`]} />
+                    <Tooltip formatter={(v) => [`$${Number(v ?? 0)}M`]} />
                     <Line type="monotone" dataKey="revenue" stroke="#3B82F6" strokeWidth={2.5} dot={{ r: 4, fill: "#3B82F6" }} name="Revenue" />
                     <Line type="monotone" dataKey="ebitda" stroke="#10B981" strokeWidth={2.5} dot={{ r: 4, fill: "#10B981" }} name="EBITDA" />
                   </LineChart>

@@ -44,7 +44,7 @@ export default function SellerOnboarding() {
     confidentialityLevel: "high",
   })
 
-  const set = (k: string, v: string | number) => setForm(f => ({ ...f, [k]: v }))
+  const set = (k: string, v: string | number | null) => setForm(f => ({ ...f, [k]: v ?? "" }))
 
   const buildPayload = (): SellerOnboardingData => ({
     companyName: form.companyName,

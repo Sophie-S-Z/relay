@@ -192,7 +192,7 @@ export default function DemoPage() {
                     <ResponsiveContainer width="100%" height={100}>
                       <LineChart data={state.convergenceHistory}>
                         <YAxis tick={{ fontSize: 9 }} tickFormatter={v => `$${(v/1e6).toFixed(1)}M`} width={35} />
-                        <Tooltip formatter={(v: number) => [fmt(v)]} contentStyle={{ background: "#27272a", border: "none", fontSize: 11 }} />
+                        <Tooltip formatter={(v) => [fmt(Number(v ?? 0))]} contentStyle={{ background: "#27272a", border: "none", fontSize: 11 }} />
                         <Line type="monotone" dataKey="sellerPrice" stroke="#10B981" strokeWidth={2} dot={{ r: 2 }} name="Seller" />
                         <Line type="monotone" dataKey="buyerPrice" stroke="#3B82F6" strokeWidth={2} dot={{ r: 2 }} name="Buyer" />
                       </LineChart>
