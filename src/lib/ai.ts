@@ -1,11 +1,10 @@
-import { createOpenAI } from "@ai-sdk/openai"
+import { createAnthropic } from "@ai-sdk/anthropic"
 
-const openai = createOpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+const anthropic = createAnthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY,
 })
 
-// gpt-4o supports structured output (generateObject) and function calling
-export const NEGOTIATION_MODEL = openai("gpt-4o")
+export const NEGOTIATION_MODEL = anthropic("claude-sonnet-4-5")
 
 export const SYSTEM_PROMPT = `You are a neutral M&A negotiation facilitator. Your role is to:
 1. Analyze positions from both buyer and seller parties
