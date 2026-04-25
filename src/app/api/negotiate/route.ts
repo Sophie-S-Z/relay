@@ -1,7 +1,5 @@
-export const maxDuration = 300 // allow up to 5 minutes for multi-round streaming on Vercel Pro
-
 import type { SellerMandate, BuyerMandate, SellerOnboardingData, BuyerProfile } from "@/lib/agents/types"
-import { runNegotiation, type NegotiationEvent, type ResumeState } from "@/lib/negotiation-engine"
+import { runNegotiation, type NegotiationEvent } from "@/lib/negotiation-engine"
 import {
   DEMO_SELLER,
   DEMO_BUYER,
@@ -9,7 +7,6 @@ import {
   DEMO_BUYER_MANDATE,
   buildDemoNegotiationState,
 } from "@/lib/scenarios"
-import { getCheckpoint, clearCheckpoint } from "@/lib/checkpoint-store"
 
 interface RequestBody {
   sessionId?: string
@@ -19,10 +16,7 @@ interface RequestBody {
   sellerMandate?: SellerMandate
   buyerMandate?: BuyerMandate
   maxRounds?: number
-  demo?: boolean
-  // Client sends this back on approve so the engine can resume without relying
-  // on a server-side store (which doesn't survive Vercel serverless cold starts)
-  resumeState?: ResumeState
+  demo?: boolean // if true, use preset scenario
 }
 
 export async function POST(req: Request): Promise<Response> {
@@ -47,25 +41,6 @@ export async function POST(req: Request): Promise<Response> {
   const buyerMandate = body.demo ? DEMO_BUYER_MANDATE : (body.buyerMandate || DEMO_BUYER_MANDATE)
   const maxRounds = body.maxRounds || 5
 
-  // On approve: prefer the client-provided resumeState (works on serverless where
-  // the in-memory store is wiped between requests), fall back to the store if not provided.
-  let resumeState: ResumeState | undefined
-  if (body.action === "approve") {
-    if (body.resumeState) {
-      resumeState = body.resumeState
-    } else {
-      const checkpoint = getCheckpoint(sessionId)
-      if (checkpoint) {
-        clearCheckpoint(sessionId)
-        resumeState = {
-          proposals: checkpoint.proposals,
-          round: checkpoint.round,
-          nextTurn: checkpoint.nextTurn,
-        }
-      }
-    }
-  }
-
   // SSE streaming response
   const encoder = new TextEncoder()
   const stream = new ReadableStream({
@@ -84,7 +59,6 @@ export async function POST(req: Request): Promise<Response> {
           buyerMandate,
           maxRounds,
           onEvent: sendEvent,
-          resumeState,
         })
       } catch (err) {
         const message = err instanceof Error ? err.message : "Negotiation failed"

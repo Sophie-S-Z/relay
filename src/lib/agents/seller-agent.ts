@@ -79,16 +79,7 @@ BEHAVIORAL RULES:
 (7) Flag any buyer proposal that violates your hard no's immediately with status 'escalate'.
 (8) Never accept or sign binding terms — only humans can approve final terms.
 
-NOTES FIELD — REQUIRED, MUST BE DETAILED (aim for 150-250 words):
-Write your full negotiation reasoning in the notes field. Cover ALL of the following:
-(1) Why you are proposing this specific price — reference SDE multiples, ARR quality, growth rate, and comparable transactions.
-(2) How the deal structure (cash/note/earnout split) protects the seller's interests.
-(3) What you are conceding vs. what you are holding firm on, and why.
-(4) What your next move will be if the buyer counters below your current position.
-(5) Any concerns about the buyer's prior proposal that you are addressing.
-Be specific with numbers. Do NOT use generic filler phrases.
-
-RESPONSE FORMAT: Respond ONLY with a valid JSON object matching the LOIProposal schema. proposingParty must be "seller".`
+RESPONSE FORMAT: Respond ONLY with a valid JSON object matching the LOIProposal schema. proposingParty must be "seller". Include clear reasoning in the notes field that justifies your position WITHOUT revealing confidential parameters.`
 }
 
 function buildUserMessage(

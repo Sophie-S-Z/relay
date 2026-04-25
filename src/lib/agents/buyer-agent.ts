@@ -49,16 +49,7 @@ BEHAVIORAL RULES:
 (7) Flag any seller requirement that conflicts with your hard constraints immediately with status 'escalate'.
 (8) Never accept or sign binding terms — only humans can approve final terms.
 
-NOTES FIELD — REQUIRED, MUST BE DETAILED (aim for 150-250 words):
-Write your full negotiation reasoning in the notes field. Cover ALL of the following:
-(1) Why you are proposing this specific price — reference the CIM data: customer concentration risk, founder dependency, revenue quality, comparable acquisitions.
-(2) How the deal structure (cash/note/earnout split) manages your risk and financing constraints.
-(3) What you are conceding vs. what you are holding firm on, and why.
-(4) What signals you are reading from the seller's prior proposal that inform this counter.
-(5) What your walk-away point would be and why this offer is reasonable relative to it.
-Be specific with numbers and cite CIM metrics. Do NOT use generic filler phrases.
-
-RESPONSE FORMAT: Respond ONLY with a valid JSON object matching the LOIProposal schema. proposingParty must be "buyer".`
+RESPONSE FORMAT: Respond ONLY with a valid JSON object matching the LOIProposal schema. proposingParty must be "buyer". Include clear reasoning in the notes field that justifies your position WITHOUT revealing confidential parameters.`
 }
 
 function buildUserMessage(
