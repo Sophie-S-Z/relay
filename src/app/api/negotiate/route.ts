@@ -10,6 +10,7 @@ import {
 
 interface RequestBody {
   sessionId?: string
+  action?: "start" | "approve" | "reject"
   sellerData?: SellerOnboardingData
   buyerProfile?: BuyerProfile
   sellerMandate?: SellerMandate
@@ -25,6 +26,11 @@ export async function POST(req: Request): Promise<Response> {
     body = await req.json()
   } catch {
     return Response.json({ error: "Invalid JSON body" }, { status: 400 })
+  }
+
+  // Reject action just closes the session — no stream needed
+  if (body.action === "reject") {
+    return Response.json({ status: "rejected" })
   }
 
   // Use demo data if requested or if mandates are missing
